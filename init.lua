@@ -185,10 +185,10 @@ vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagn
 vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 
 -- TIP: Disable arrow keys in normal mode
--- vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
--- vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
--- vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
--- vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
+vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
+vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
+vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
+vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
 
 -- Keybinds to make split navigation easier.
 --  Use CTRL+<hjkl> to switch between windows
@@ -198,6 +198,13 @@ vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left wind
 vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+
+-- CUSTOM - Tab navigation
+-- Tab management keymaps
+vim.keymap.set('n', '<leader>tn', '<cmd>tabnew<CR>', { desc = '[T]ab [N]ew' })
+vim.keymap.set('n', '<leader>tc', '<cmd>tabclose<CR>', { desc = '[T]ab [C]lose' })
+vim.keymap.set('n', '<leader>tl', '<cmd>tabnext<CR>', { desc = '[T]ab [L]ater (next)' })
+vim.keymap.set('n', '<leader>tp', '<cmd>tabprevious<CR>', { desc = '[T]ab [P]revious' })
 
 -- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
 -- vim.keymap.set("n", "<C-S-h>", "<C-w>H", { desc = "Move window to the left" })
@@ -346,7 +353,10 @@ require('lazy').setup({
       spec = {
         { '<leader>s', group = '[S]earch' },
         { '<leader>t', group = '[T]oggle' },
+        { '<leader>t', group = '[T]ab', mode = 'n' }, -- CUSTOM
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
+        { '<leader>n', group = '[N]eoTree', mode = 'n' }, -- CUSTOM
+        { '<leader>o', group = '[O]pen', mode = 'n' }, -- CUSTOM
       },
     },
   },
@@ -437,6 +447,31 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
       vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
 
+      -- CUSTOM - Open files in a new tab
+      -- vim.keymap.set('n', '<leader>tf', function()
+      --   require('telescope.builtin').find_files {
+      --     jump_type = 'tab', -- Apre il file selezionato in una nuova tab
+      --   }
+      -- end, { desc = '[T]ab [F]ind files' })
+      vim.keymap.set('n', '<leader>tf', function()
+        require('telescope.builtin').find_files {
+          -- default_mappings = false, -- Disabilita i mapping predefiniti (opzionale)
+          attach_mappings = function(_, map)
+            -- Mappa l'azione di selezione per aprire in una nuova tab
+            map('i', '<CR>', require('telescope.actions').select_tab)
+            map('n', '<CR>', require('telescope.actions').select_tab)
+            return true
+          end,
+        }
+      end, { desc = '[T]ab [F]ind files' })
+
+      -- CUSTOM - Open buffer in a new tab
+      vim.keymap.set('n', '<leader>tb', function()
+        require('telescope.builtin').buffers {
+          jump_type = 'tab', -- Apre il buffer selezionato in una nuova tab
+        }
+      end, { desc = '[T]ab [B]uffers' })
+
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
         -- You can pass additional configuration to Telescope to change the theme, layout, etc.
@@ -459,6 +494,21 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sn', function()
         builtin.find_files { cwd = vim.fn.stdpath 'config' }
       end, { desc = '[S]earch [N]eovim files' })
+
+      -- Shortcut for looking for lsp definitions - CUSTOM
+      -- vim.keymap.set('n', 'gl', '<cmd>Telescope lsp_definitions<CR>', { desc = '[g]o to [l]sp def' })
+      vim.keymap.set('n', 'gl', function()
+        require('telescope.builtin').lsp_definitions {
+          jump_type = 'tab', -- Apre il risultato in una nuova tab
+        }
+      end, { desc = '[G]o to [L]SP definition in new tab' })
+
+      -- CUSTOM - Open HTML files in browser
+      vim.keymap.set('n', '<leader>oh', ':execute "!xdg-open %"<CR>', {
+        desc = '[O]pen [H]TML file in browser',
+        noremap = true,
+        silent = true,
+      })
     end,
   },
 
@@ -698,6 +748,9 @@ require('lazy').setup({
             },
           },
         },
+        -- omnisharp = {
+        --   cmd = { vim.fn.stdpath 'data' .. '/mason/packages/omnisharp/OmniSharp' },
+        -- },
       }
 
       -- Ensure the servers and tools above are installed
@@ -716,6 +769,7 @@ require('lazy').setup({
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
+        -- 'omnisharp',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -729,7 +783,8 @@ require('lazy').setup({
             -- by the server configuration above. Useful when disabling
             -- certain features of an LSP (for example, turning off formatting for ts_ls)
             server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-            require('lspconfig')[server_name].setup(server)
+            -- require('lspconfig')[server_name].setup(server) DEPRECATED
+            vim.lsp.config[server_name] = server
           end,
         },
       }
@@ -876,16 +931,70 @@ require('lazy').setup({
     },
   },
 
+  -- CUSTOM - Codeium
+  {
+    'Exafunction/windsurf.nvim',
+    dependencies = {
+      'nvim-lua/plenary.nvim',
+      'hrsh7th/nvim-cmp',
+    },
+    config = function()
+      require('codeium').setup {
+        -- Optionally disable cmp source if using virtual text only
+        enable_cmp_source = false,
+        virtual_text = {
+          enabled = true,
+
+          -- These are the defaults
+
+          -- Set to true if you never want completions to be shown automatically.
+          manual = false,
+          -- A mapping of filetype to true or false, to enable virtual text.
+          filetypes = {},
+          -- Whether to enable virtual text of not for filetypes not specifically listed above.
+          default_filetype_enabled = true,
+          -- How long to wait (in ms) before requesting completions after typing stops.
+          idle_delay = 75,
+          -- Priority of the virtual text. This usually ensures that the completions appear on top of
+          -- other plugins that also add virtual text, such as LSP inlay hints, but can be modified if
+          -- desired.
+          virtual_text_priority = 65535,
+          -- Set to false to disable all key bindings for managing completions.
+          map_keys = true,
+          -- The key to press when hitting the accept keybinding but no completion is showing.
+          -- Defaults to \t normally or <c-n> when a popup is showing.
+          accept_fallback = nil,
+          -- Key bindings for managing completions in virtual text mode.
+          key_bindings = {
+            -- Accept the current completion.
+            accept = '<Tab>',
+            -- Accept the next word.
+            accept_word = false,
+            -- Accept the next line.
+            accept_line = false,
+            -- Clear the virtual text.
+            clear = false,
+            -- Cycle to the next completion.
+            next = '<M-]>',
+            -- Cycle to the previous completion.
+            prev = '<M-[>',
+          },
+        },
+      }
+    end,
+  },
+
   { -- You can easily change to a different colorscheme.
     -- Change the name of the colorscheme plugin below, and then
     -- change the command in the config to whatever the name of that colorscheme is.
     --
     -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-    'folke/tokyonight.nvim',
+    'scottmckendry/cyberdream.nvim',
     priority = 1000, -- Make sure to load this before all the other start plugins.
     config = function()
       ---@diagnostic disable-next-line: missing-fields
-      require('tokyonight').setup {
+      require('cyberdream').setup {
+        transparent = true,
         styles = {
           comments = { italic = false }, -- Disable italics in comments
         },
@@ -894,7 +1003,7 @@ require('lazy').setup({
       -- Load the colorscheme here.
       -- Like many other themes, this one has different styles, and you could load
       -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'tokyonight-night'
+      vim.cmd.colorscheme 'cyberdream'
     end,
   },
 
@@ -973,18 +1082,18 @@ require('lazy').setup({
   --  Here are some example plugins that I've included in the Kickstart repository.
   --  Uncomment any of the lines below to enable them (you will need to restart nvim).
   --
-  -- require 'kickstart.plugins.debug',
-  -- require 'kickstart.plugins.indent_line',
-  -- require 'kickstart.plugins.lint',
-  -- require 'kickstart.plugins.autopairs',
-  -- require 'kickstart.plugins.neo-tree',
-  -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
+  require 'kickstart.plugins.debug',
+  require 'kickstart.plugins.indent_line',
+  require 'kickstart.plugins.lint',
+  require 'kickstart.plugins.autopairs',
+  require 'kickstart.plugins.neo-tree',
+  require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
   --
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
-  -- { import = 'custom.plugins' },
+  { import = 'custom.plugins' },
   --
   -- For additional information with loading, sourcing and examples see `:help lazy.nvim-🔌-plugin-spec`
   -- Or use telescope!
@@ -1014,3 +1123,13 @@ require('lazy').setup({
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
+
+vim.o.relativenumber = true
+
+-- COLORI PER I NUMERI A LATO
+vim.api.nvim_set_hl(0, 'LineNrAbove', { fg = '#51B3EC', bold = true })
+vim.api.nvim_set_hl(0, 'LineNr', { fg = 'yellow', bold = true })
+vim.api.nvim_set_hl(0, 'LineNrBelow', { fg = '#FB508F', bold = true })
+
+-- COLORI PER I COMMENTI
+vim.api.nvim_set_hl(0, 'Comment', { fg = '#e4a2d5', italic = true })
