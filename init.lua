@@ -823,11 +823,23 @@ require('lazy').setup({
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
+        sql = { 'sql-formatter', 'sqlfluff', 'sqlfmt' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
         -- You can use 'stop_after_first' to run the first available formatter from the list
         -- javascript = { "prettierd", "prettier", stop_after_first = true },
+      },
+      formatters = {
+        ['sql-formatter'] = {
+          command = 'sql-formatter',
+          args = { '-l', 'mysql' }, -- oppure "mariadb", "postgresql", etc.
+        },
+        ['sqlfluff'] = {
+          command = 'sqlfluff',
+          args = { 'fix', '--dialect', 'mysql', '-' },
+        },
+        ['sqlfmt'] = { command = 'sqlfmt' },
       },
     },
   },
@@ -931,6 +943,39 @@ require('lazy').setup({
     },
   },
 
+  -- require('conform').setup {
+  --   formatters_by_ft = {
+  --     sql = { 'sql-formatter' },
+  --   },
+  -- },
+
+  -- CUSTOM - SQL
+  -- vim.lsp.config('sqls', {
+  --   on_attach = function(client, bufnr)
+  --     client.server_capabilities.documentFormattingProvider = false
+  --     client.server_capabilities.documentRangeFormattingProvider = false
+  --   end,
+  -- }),
+
+  -- {
+  --   'nanotee/sqls.nvim',
+  --   vim.lsp.config('sqls', {
+  --     cmd = { 'sqls', 'server' },
+  --     filetypes = { 'sql' },
+  --     settings = {
+  --       sqls = {
+  --         connections = {
+  --           {
+  --             driver = 'mysql',
+  --             dataSourceName = 'root:BMerlino14@tcp(localhost:3306)/mysql',
+  --           },
+  --         },
+  --       },
+  --     },
+  --   }),
+  --   vim.lsp.enable 'sqls',
+  -- },
+  --
   -- CUSTOM - Codeium
   {
     'Exafunction/windsurf.nvim',
@@ -1133,3 +1178,17 @@ vim.api.nvim_set_hl(0, 'LineNrBelow', { fg = '#FB508F', bold = true })
 
 -- COLORI PER I COMMENTI
 vim.api.nvim_set_hl(0, 'Comment', { fg = '#e4a2d5', italic = true })
+
+-- require('lspconfig').sqls.setup {
+--   on_attach = function(client, bufnr)
+--     client.server_capabilities.documentFormattingProvider = false
+--     client.server_capabilities.documentRangeFormattingProvider = false
+--   end,
+-- }
+-- CUSTOM - SQL
+vim.lsp.config('sqls', {
+  on_attach = function(client, bufnr)
+    client.server_capabilities.documentFormattingProvider = false
+    client.server_capabilities.documentRangeFormattingProvider = false
+  end,
+})
