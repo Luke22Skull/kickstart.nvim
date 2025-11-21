@@ -823,7 +823,7 @@ require('lazy').setup({
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
-        sql = { 'sql-formatter', 'sqlfluff', 'sqlfmt' },
+        sql = { 'sql-formatter', 'sqlfluff' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
@@ -943,39 +943,36 @@ require('lazy').setup({
     },
   },
 
-  -- require('conform').setup {
-  --   formatters_by_ft = {
-  --     sql = { 'sql-formatter' },
-  --   },
-  -- },
+  {
+    'rcasia/neotest-java',
+    ft = 'java',
+    dependencies = {
+      'mfussenegger/nvim-jdtls',
+      'mfussenegger/nvim-dap', -- for the debugger
+      'rcarriga/nvim-dap-ui', -- recommended
+      'theHamsta/nvim-dap-virtual-text', -- recommended
+    },
+  },
 
-  -- CUSTOM - SQL
-  -- vim.lsp.config('sqls', {
-  --   on_attach = function(client, bufnr)
-  --     client.server_capabilities.documentFormattingProvider = false
-  --     client.server_capabilities.documentRangeFormattingProvider = false
-  --   end,
-  -- }),
+  {
+    'nvim-neotest/neotest',
+    dependencies = {
+      'nvim-neotest/nvim-nio',
+      'nvim-lua/plenary.nvim',
+      'antoinemadec/FixCursorHold.nvim',
+      'nvim-treesitter/nvim-treesitter',
+    },
+    config = function()
+      require('neotest').setup {
+        adapters = {
+          require 'neotest-java' {
+            -- config here
+          },
+        },
+      }
+    end,
+  },
 
-  -- {
-  --   'nanotee/sqls.nvim',
-  --   vim.lsp.config('sqls', {
-  --     cmd = { 'sqls', 'server' },
-  --     filetypes = { 'sql' },
-  --     settings = {
-  --       sqls = {
-  --         connections = {
-  --           {
-  --             driver = 'mysql',
-  --             dataSourceName = 'root:BMerlino14@tcp(localhost:3306)/mysql',
-  --           },
-  --         },
-  --       },
-  --     },
-  --   }),
-  --   vim.lsp.enable 'sqls',
-  -- },
-  --
   -- CUSTOM - Codeium
   {
     'Exafunction/windsurf.nvim',
